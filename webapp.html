@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>0rkUS Task — Professional</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #141414;
+      --bg-tertiary: #1a1a1a;
+      --text-primary: #e8e8e8;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666666;
+      --accent: #6366f1;
+      --accent-dark: #4f46e5;
+      --accent-light: #818cf8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border: #2a2a2a;
+      
+      --glass-bg: rgba(20, 20, 20, 0.5);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      
+      --neu-shadow-light: rgba(255, 255, 255, 0.05);
+      --neu-shadow-dark: rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f0f0f0;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #fafafa;
+      --text-primary: #1a1a1a;
+      --text-secondary: #4a4a4a;
+      --text-muted: #888888;
+      --border: #e0e0e0;
+      --glass-bg: rgba(255, 255, 255, 0.5);
+      --glass-border: rgba(0, 0, 0, 0.15);
+      --neu-shadow-light: rgba(255, 255, 255, 1);
+      --neu-shadow-dark: rgba(0, 0, 0, 0.15);
+    }
+
+    [data-theme="purple"] {
+      --bg-primary: #1a0a2e;
+      --bg-secondary: #2d1b4e;
+      --bg-tertiary: #3a2659;
+      --accent: #a855f7;
+      --accent-dark: #9333ea;
+      --accent-light: #c084fc;
+      --glass-bg: rgba(45, 27, 78, 0.5);
+    }
+
+    [data-theme="blue"] {
+      --bg-primary: #0a1929;
+      --bg-secondary: #1e3a5f;
+      --bg-tertiary: #2d4f7c;
+      --accent: #3b82f6;
+      --accent-dark: #2563eb;
+      --accent-light: #60a5fa;
+      --glass-bg: rgba(30, 58, 95, 0.5);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 0 0 80px 0;
+      line-height: 1.6;
+      transition: background 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 50%, var(--accent) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, var(--accent-dark) 0%, transparent 50%);
+      opacity: 0.05;
+      z-index: -1;
+      animation: bgMove 20s ease infinite;
+    }
+
+    @keyframes bgMove {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(50px, 30px) scale(1.1); }
+    }
+
+    /* Enhanced Glass Morphism */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.1), 
+        transparent
+      );
+      animation: glassFlow 8s linear infinite;
+    }
+
+    @keyframes glassFlow {
+      0% { left: -100%; }
+      100% { left: 200%; }
+    }
+
+    body.glass-disabled .glass {
+      background: var(--bg-secondary);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    body.glass-disabled .glass::before {
+      display: none;
+    }
+
+    .neu {
+      background: var(--bg-secondary);
+      box-shadow: 8px 8px 16px var(--neu-shadow-dark),
+                  -8px -8px 16px var(--neu-shadow-light);
+      border: none;
+    }
+
+    .neu-inset {
+      background: var(--bg-secondary);
+      box-shadow: inset 6px 6px 12px var(--neu-shadow-dark),
+                  inset -6px -6px 12px var(--neu-shadow-light);
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+      padding: 24px 20px;
+      border-radius: 0 0 32px 32px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+      animation: headerShine 8s linear infinite;
+    }
+
+    @keyframes headerShine {
+      0% { transform: translate(-100%, -100%) rotate(0deg); }
+      100% { transform: translate(100%, 100%) rotate(360deg); }
+    }
+
+    .greeting {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .rank-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 8px;
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(10px);
+      animation: badgePulse 3s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .settings-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 999;
+      transition: transform 0.3s ease;
+    }
+
+    .settings-btn:active {
+      transform: scale(0.9) rotate(90deg);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border-radius: 24px;
+      padding: 30px;
+      max-width: 90%;
+      width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .setting-item {
+      margin-bottom: 20px;
+    }
+
+    .setting-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 26px;
+      background: var(--border);
+      border-radius: 13px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle.active {
+      background: var(--accent);
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    .toggle.active::after {
+      transform: translateX(24px);
+    }
+
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .theme-option {
+      padding: 16px;
+      border-radius: 16px;
+      border: 2px solid var(--border);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .theme-option.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .theme-preview {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      margin: 0 auto 8px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 16px;
+      margin-top: -30px;
+    }
+
+    .stat-card {
+      padding: 20px 12px;
+      border-radius: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      animation: cardFloat 3s ease-in-out infinite;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes cardFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .stat-card:active {
+      transform: scale(0.95);
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+      z-index: 998;
+      backdrop-filter: blur(20px);
+    }
+
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 10px 8px;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .nav-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 0 0 3px 3px;
+      transition: width 0.3s ease;
+    }
+
+    .nav-item.active::before {
+      width: 60%;
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .nav-emoji {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 4px;
+      transition: transform 0.3s ease;
+    }
+
+    .nav-item.active .nav-emoji {
+      transform: scale(1.2);
+    }
+
+    .page {
+      display: none;
+      padding: 16px;
+      animation: pageSlide 0.3s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes pageSlide {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 24px 0 16px;
+      background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .task-card {
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .task-card:active {
+      transform: scale(0.98);
+    }
+
+    .task-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .task-description {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 10px 0;
+    }
+
+    .task-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .task-price {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--success), #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .task-rank {
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border-radius: 16px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn:active::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: white;
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(2px);
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: white;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      color: white;
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Chess - Fixed size */
+    .chess-container {
+      max-width: 100%;
+      margin: 20px auto;
+    }
+
+    .chess-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .difficulty-btn {
+      padding: 8px 16px;
+      border-radius: 12px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .difficulty-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .chess-board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 0;
+      width: 100%;
+      max-width: 360px;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      margin: 0 auto;
+      border: 3px solid var(--accent);
+    }
+
+    .chess-square {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      user-select: none;
+    }
+
+    .chess-square.light {
+      background: #f0d9b5;
+    }
+
+    .chess-square.dark {
+      background: #b58863;
+    }
+
+    .chess-square.selected {
+      background: #7dd3fc !important;
+      box-shadow: inset 0 0 20px rgba(125, 211, 252, 0.5);
+    }
+
+    .chess-square.move-hint {
+      background: #86efac !important;
+    }
+
+    .chess-square.move-hint::after {
+      content: '';
+      position: absolute;
+      width: 25%;
+      height: 25%;
+      background: rgba(0,0,0,0.3);
+      border-radius: 50%;
+      animation: hintPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes hintPulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.3); opacity: 0.8; }
+    }
+
+    .chess-square.last-move {
+      background: rgba(255, 255, 0, 0.3) !important;
+    }
+
+    .chess-piece {
+      transition: transform 0.2s ease;
+      filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .chess-square:hover .chess-piece {
+      transform: scale(1.15);
+    }
+
+    .chess-info {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .chess-status {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .chess-turn {
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .chess-analysis {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--bg-tertiary);
+    }
+
+    .analysis-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .move-list {
+      max-height: 200px;
+      overflow-y: auto;
+      text-align: left;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .move-item {
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+
+    .move-item:nth-child(odd) {
+      background: var(--bg-secondary);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+      animation: emptyFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes emptyFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--border);
+      border-top: 4px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .profile-card {
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+
+    .profile-row:last-child {
+      border-bottom: none;
+    }
+
+    .progress-container {
+      margin: 20px 0;
+    }
+
+    .progress-bar {
+      height: 28px;
+      background: var(--bg-tertiary);
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 13px;
+      color: white;
+      transition: width 1s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: progressShine 2s infinite;
+    }
+
+    @keyframes progressShine {
+      to { left: 100%; }
+    }
+
+    .rules-section {
+      margin-bottom: 20px;
+    }
+
+    .rules-section h3 {
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+
+    .rules-section ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .rules-section li {
+      padding: 8px 0 8px 24px;
+      position: relative;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .rules-section li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    @media (max-width: 400px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .chess-board {
+        max-width: 320px;
+      }
+
+      .chess-square {
+        font-size: 24px;
+      }
+
+      .chess-piece {
+        font-size: 28px;
+      }
+
+      .modal-content {
+        width: 95%;
+        padding: 20px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="settings-btn" onclick="openSettings()">⚙️</div>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="settings-modal">
+    <div class="modal-content glass">
+      <div class="modal-title">⚙️ Настройки</div>
+      
+      <div class="setting-item">
+        <div class="setting-label">
+          <span>Жидкое стекло</span>
+          <div class="toggle active" id="glass-toggle" onclick="toggleGlass()"></div>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-label">
+          <span>Неоморфизм</span>
+          <div class="toggle" id="neu-toggle" onclick="toggleNeu()"></div>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-label" style="margin-bottom: 16px;">
+          <span>Тема оформления</span>
+        </div>
+        <div class="theme-grid">
+          <div class="theme-option active" onclick="setTheme('dark')">
+            <div class="theme-preview" style="background: linear-gradient(135deg, #0a0a0a, #1a1a1a);"></div>
+            <div>Тёмная</div>
+          </div>
+          <div class="theme-option" onclick="setTheme('light')">
+            <div class="theme-preview" style="background: linear-gradient(135deg, #f0f0f0, #ffffff);"></div>
+            <div>Светлая</div>
+          </div>
+          <div class="theme-option" onclick="setTheme('purple')">
+            <div class="theme-preview" style="background: linear-gradient(135deg, #1a0a2e, #a855f7);"></div>
+            <div>Фиолетовая</div>
+          </div>
+          <div class="theme-option" onclick="setTheme('blue')">
+            <div class="theme-preview" style="background: linear-gradient(135deg, #0a1929, #3b82f6);"></div>
+            <div>Синяя</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="closeSettings()">
+        Сохранить
+      </button>
+    </div>
+  </div>
+
+  <div class="header">
+    <div class="greeting">Привет, <span id="user-name"></span>!</div>
+    <div class="rank-badge" id="rank-badge">Загрузка...</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card glass neu">
+      <span class="stat-value" id="completed">0</span>
+      <div class="stat-label">Выполнено</div>
+    </div>
+    <div class="stat-card glass neu">
+      <span class="stat-value" id="in-progress">0</span>
+      <div class="stat-label">В работе</div>
+    </div>
+    <div class="stat-card glass neu">
+      <span class="stat-value" id="earned">0 ₽</span>
+      <div class="stat-label">Заработано</div>
+    </div>
+  </div>
+
+  <!-- Tasks Page -->
+  <div id="page-tasks" class="page active">
+    <div class="section-title">📋 Доступные задачи</div>
+    <div id="tasks-list"></div>
+  </div>
+
+  <!-- My Tasks Page -->
+  <div id="page-my-tasks" class="page">
+    <div class="section-title">📝 Мои задания</div>
+    <div id="my-tasks-list"></div>
+  </div>
+
+  <!-- Profile Page -->
+  <div id="page-profile" class="page">
+    <div class="section-title">👤 Профиль</div>
+    <div class="profile-card glass neu">
+      <div class="profile-row">
+        <span>Ранг:</span>
+        <strong id="profile-rank">Новичок</strong>
+      </div>
+      <div class="profile-row">
+        <span>Internal ID:</span>
+        <strong id="internal-id">—</strong>
+      </div>
+      <div class="profile-row">
+        <span>Опыт:</span>
+        <strong id="profile-exp">0 ₽</strong>
+      </div>
+    </div>
+    <div class="progress-container">
+      <div style="margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">
+        Прогресс до следующего ранга
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="rank-progress" style="width: 0%">0%</div>
+      </div>
+    </div>
+    <div class="profile-card glass neu">
+      <div class="profile-row">
+        <span>♟️ ELO (шахматы):</span>
+        <strong id="chess-elo">400</strong>
+      </div>
+      <div class="profile-row">
+        <span>🏆 Побед в играх:</span>
+        <strong id="games-won">0</strong>
+      </div>
+      <div class="profile-row">
+        <span>⚠️ Предупреждения:</span>
+        <strong id="warnings" style="color: var(--danger)">0/5</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chess Page -->
+  <div id="page-chess" class="page">
+    <div class="section-title">♟️ Шахматы</div>
+    
+    <div class="chess-container">
+      <div class="chess-controls">
+        <div class="difficulty-btn active" onclick="setDifficulty(1)" data-diff="1">Легко</div>
+        <div class="difficulty-btn" onclick="setDifficulty(2)" data-diff="2">Средне</div>
+        <div class="difficulty-btn" onclick="setDifficulty(3)" data-diff="3">Сложно</div>
+      </div>
+
+      <div class="chess-board" id="chess-board"></div>
+
+      <div class="chess-info glass neu">
+        <div class="chess-status" id="chess-status">Нажмите "Новая игра"</div>
+        <div class="chess-turn" id="chess-turn"></div>
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <button class="btn btn-primary" onclick="startNewGame()">🎮 Новая игра</button>
+          <button class="btn btn-secondary" onclick="undoMove()">↩️ Отменить</button>
+        </div>
+        <div style="font-size: 14px; color: var(--text-secondary); margin-top: 12px;">
+          Ваш ELO: <strong id="elo-display">400</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="chess-analysis glass neu" id="chess-analysis" style="display: none;">
+      <div class="analysis-title">📊 Анализ партии</div>
+      <div id="game-result" style="font-size: 16px; margin-bottom: 12px;"></div>
+      <div class="move-list" id="move-list"></div>
+      <button class="btn btn-primary" style="width: 100%; margin-top: 16px;" onclick="closeAnalysis()">
+        Закрыть
+      </button>
+    </div>
+  </div>
+
+  <!-- Rules Page -->
+  <div id="page-rules" class="page">
+    <div class="section-title">📜 Правила платформы</div>
+    
+    <div class="profile-card glass neu rules-section">
+      <h3>🎯 Общие правила</h3>
+      <ul>
+        <li>Выполняйте задачи честно и качественно</li>
+        <li>Соблюдайте указанные дедлайны</li>
+        <li>Не используйте вредоносный код или плагиат</li>
+        <li>Уважайте администрацию и других пользователей</li>
+        <li>Указывайте корректные реквизиты для выплат</li>
+      </ul>
+    </div>
+
+    <div class="profile-card glass neu rules-section">
+      <h3>⚠️ Система предупреждений</h3>
+      <ul>
+        <li><strong>1-2 предупреждения:</strong> Уведомление</li>
+        <li><strong>3 предупреждения:</strong> Блокировка на 24 часа</li>
+        <li><strong>4 предупреждения:</strong> Блокировка на неделю</li>
+        <li><strong>5 предупреждений:</strong> ПЕРМАНЕНТНЫЙ БАН + обнуление прогресса</li>
+      </ul>
+    </div>
+
+    <div class="profile-card glass neu rules-section">
+      <h3>🤖 AI-проверка работ</h3>
+      <ul>
+        <li>Каждая работа проверяется искусственным интеллектом</li>
+        <li>Fraud Score > 70 → автоматическое предупреждение</li>
+        <li>Обнаружение вредоносного кода → моментальный бан</li>
+        <li>Плагиат и копипаст → предупреждение</li>
+      </ul>
+    </div>
+
+    <div class="profile-card glass neu rules-section">
+      <h3>🎖️ Система рангов</h3>
+      <ul>
+        <li><strong>Новичок (0₽):</strong> Макс 3 задачи, базовые игры</li>
+        <li><strong>Подмастерье (500₽):</strong> Макс 5 задач, шахматы</li>
+        <li><strong>Мастер (2000₽):</strong> Макс 10 задач, память</li>
+        <li><strong>Эксперт (5000₽):</strong> Макс 15 задач, квиз</li>
+        <li><strong>Гроссмейстер (10000₽):</strong> Макс 20 задач, трейдинг</li>
+        <li><strong>Легенда (25000₽):</strong> Макс 99 задач, VIP задачи</li>
+      </ul>
+    </div>
+
+    <div class="profile-card glass neu rules-section">
+      <h3>💰 Оплата и комиссия</h3>
+      <ul>
+        <li>Комиссия платформы: 30% от суммы задачи</li>
+        <li>Выплаты производятся после одобрения работы</li>
+        <li>Неправильная карта → выплата владельцу (100%)</li>
+        <li>Низкий рейтинг работодателя → выплата владельцу (100%)</li>
+      </ul>
+    </div>
+
+    <div class="profile-card glass neu rules-section">
+      <h3>🚫 Запрещено</h3>
+      <ul>
+        <li>Использование автоматизации и ботов</li>
+        <li>Множественные аккаунты (мультиаккаунтинг)</li>
+        <li>Передача задач третьим лицам</li>
+        <li>Оскорбления и угрозы</li>
+        <li>Попытки взлома или обхода системы</li>
+        <li>Спам и флуд в поддержке</li>
+      </ul>
+    </div>
+
+    <div class="profile-card glass neu rules-section">
+      <h3>📞 Поддержка</h3>
+      <ul>
+        <li>Время ответа: до 24 часов</li>
+        <li>Используйте раздел "Помощь" для обращений</li>
+        <li>При жалобе предоставляйте доказательства</li>
+        <li>Повторные обращения рассматриваются быстрее</li>
+      </ul>
+    </div>
+
+    <div style="text-align: center; margin-top: 24px; color: var(--text-muted); font-size: 14px;">
+      Администрация оставляет за собой право изменять правила<br>
+      Последнее обновление: Январь 2026
+    </div>
+  </div>
+
+  <!-- Support Page -->
+  <div id="page-support" class="page">
+    <div class="section-title">🆘 Поддержка</div>
+    <div class="profile-card glass neu">
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Тема обращения</label>
+        <select id="support-type" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary);">
+          <option value="support">Помощь</option>
+          <option value="complaint">Жалоба</option>
+          <option value="suggestion">Предложение</option>
+          <option value="bug">Баг/Ошибка</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Сообщение</label>
+        <textarea id="support-message" style="width: 100%; min-height: 120px; padding: 12px; border-radius: 12px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); resize: vertical; font-family: inherit;" placeholder="Опишите вашу проблему..."></textarea>
+      </div>
+      <button class="btn btn-primary" style="width: 100%;" onclick="submitSupport()">
+        📤 Отправить
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="nav-bar glass">
+    <div class="nav-item active" onclick="showPage('tasks')">
+      <span class="nav-emoji">📋</span>
+      Задачи
+    </div>
+    <div class="nav-item" onclick="showPage('my-tasks')">
+      <span class="nav-emoji">📝</span>
+      Мои
+    </div>
+    <div class="nav-item" onclick="showPage('profile')">
+      <span class="nav-emoji">👤</span>
+      Профиль
+    </div>
+    <div class="nav-item" onclick="showPage('chess')">
+      <span class="nav-emoji">♟️</span>
+      Шахматы
+    </div>
+    <div class="nav-item" onclick="showPage('rules')">
+      <span class="nav-emoji">📜</span>
+      Правила
+    </div>
+    <div class="nav-item" onclick="showPage('support')">
+      <span class="nav-emoji">🆘</span>
+      Помощь
+    </div>
+  </nav>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    const user = tg.initDataUnsafe?.user || {};
+    const initData = tg.initData;
+    const API_URL = '/api';
+
+    // Set username from Telegram
+    const username = user.username || user.first_name || 'Пользователь';
+    document.getElementById('user-name').textContent = username;
+
+    const setCookie = (name, value, days = 365) => {
+      const d = new Date();
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/`;
+    };
+
+    const getCookie = (name) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+      return null;
+    };
+
+    function loadSettings() {
+      const glassEnabled = getCookie('glassEnabled') !== 'false';
+      const neuEnabled = getCookie('neuEnabled') === 'true';
+      const theme = getCookie('theme') || 'dark';
+
+      document.getElementById('glass-toggle').classList.toggle('active', glassEnabled);
+      document.getElementById('neu-toggle').classList.toggle('active', neuEnabled);
+      
+      if (!glassEnabled) document.body.classList.add('glass-disabled');
+      if (!neuEnabled) {
+        document.querySelectorAll('.neu').forEach(el => el.classList.remove('neu'));
+      }
+
+      document.documentElement.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-option').forEach(opt => {
+        opt.classList.toggle('active', opt.getAttribute('onclick').includes(`'${theme}'`));
+      });
+    }
+
+    function openSettings() {
+      document.getElementById('settings-modal').classList.add('active');
+    }
+
+    function closeSettings() {
+      document.getElementById('settings-modal').classList.remove('active');
+    }
+
+    function toggleGlass() {
+      const toggle = document.getElementById('glass-toggle');
+      const isActive = toggle.classList.toggle('active');
+      document.body.classList.toggle('glass-disabled', !isActive);
+      setCookie('glassEnabled', isActive);
+    }
+
+    function toggleNeu() {
+      const toggle = document.getElementById('neu-toggle');
+      const isActive = toggle.classList.toggle('active');
+      
+      document.querySelectorAll('.stat-card, .profile-card, .task-card, .chess-info, .chess-analysis').forEach(el => {
+        if (isActive) {
+          el.classList.add('neu');
+        } else {
+          el.classList.remove('neu');
+        }
+      });
+      
+      setCookie('neuEnabled', isActive);
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-option').forEach(opt => {
+        opt.classList.toggle('active', opt.getAttribute('onclick').includes(`'${theme}'`));
+      });
+      setCookie('theme', theme);
+    }
+
+    document.getElementById('settings-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'settings-modal') closeSettings();
+    });
+
+    const RANKS = {
+      1: {name: "Новичок", color: "#808080", minExp: 0},
+      2: {name: "Подмастерье", color: "#8B4513", minExp: 500},
+      3: {name: "Мастер", color: "#4169E1", minExp: 2000},
+      4: {name: "Эксперт", color: "#9370DB", minExp: 5000},
+      5: {name: "Гроссмейстер", color: "#FFD700", minExp: 10000},
+      6: {name: "Легенда", color: "#FF6347", minExp: 25000}
+    };
+
+    function getRank(earned) {
+      for (let i = 6; i >= 1; i--) {
+        if (earned >= RANKS[i].minExp) return i;
+      }
+      return 1;
+    }
+
+    function updateRankDisplay(earned) {
+      const rank = getRank(earned);
+      const rankData = RANKS[rank];
+      const badge = document.getElementById('rank-badge');
+      badge.textContent = rankData.name;
+      badge.style.background = rankData.color;
+      badge.style.color = 'white';
+
+      document.getElementById('profile-rank').textContent = rankData.name;
+      document.getElementById('profile-exp').textContent = `${earned} ₽`;
+
+      const nextRank = RANKS[rank + 1];
+      if (nextRank) {
+        const progress = ((earned - rankData.minExp) / (nextRank.minExp - rankData.minExp)) * 100;
+        document.getElementById('rank-progress').style.width = `${progress}%`;
+        document.getElementById('rank-progress').textContent = `${Math.round(progress)}%`;
+      } else {
+        document.getElementById('rank-progress').style.width = '100%';
+        document.getElementById('rank-progress').textContent = 'MAX';
+      }
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(`page-${pageId}`).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      event.target.closest('.nav-item').classList.add('active');
+
+      if (pageId === 'tasks') loadTasks();
+      else if (pageId === 'my-tasks') loadMyTasks();
+      else if (pageId === 'chess') initChessBoard();
+    }
+
+    async function loadUserData() {
+      try {
+        const res = await fetch(`${API_URL}/user_data`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({initData})
+        });
+        const data = await res.json();
+
+        document.getElementById('completed').textContent = data.completed || 0;
+        document.getElementById('in-progress').textContent = data.inProgress || 0;
+        document.getElementById('earned').textContent = `${data.earned || 0} ₽`;
+        document.getElementById('internal-id').textContent = data.internalId || '—';
+        document.getElementById('chess-elo').textContent = data.chessElo || 400;
+        document.getElementById('elo-display').textContent = data.chessElo || 400;
+        document.getElementById('games-won').textContent = data.gamesWon || 0;
+        document.getElementById('warnings').textContent = `${data.warnings || 0}/5`;
+
+        updateRankDisplay(data.earned || 0);
+        setCookie('userData', JSON.stringify(data));
+      } catch (e) {
+        console.error('Error loading user data:', e);
+        const cached = getCookie('userData');
+        if (cached) {
+          const data = JSON.parse(cached);
+          updateRankDisplay(data.earned || 0);
+        }
+      }
+    }
+
+    async function loadTasks() {
+      const container = document.getElementById('tasks-list');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      try {
+        const res = await fetch(`${API_URL}/tasks`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({initData})
+        });
+        const data = await res.json();
+
+        if (!data.tasks || data.tasks.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <div>Нет доступных задач</div>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = '';
+        data.tasks.forEach(task => {
+          const rankData = RANKS[task.minRank] || RANKS[1];
+          const card = document.createElement('div');
+          card.className = 'task-card glass neu';
+          card.innerHTML = `
+            <div class="task-title">${task.title}</div>
+            <div class="task-description">
+              ${task.description.substring(0, 120)}${task.description.length > 120 ? '...' : ''}
+            </div>
+            <div class="task-meta">
+              <span class="task-price">💰 ${task.price} ₽</span>
+              <span class="task-rank" style="background: ${rankData.color}; color: white;">
+                ${rankData.name}+
+              </span>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 16px;" 
+                    onclick="takeTask(${task.taskId})">
+              ✨ Взять в работу
+            </button>
+          `;
+          container.appendChild(card);
+        });
+
+        setCookie('tasks', JSON.stringify(data.tasks));
+      } catch (e) {
+        console.error('Error loading tasks:', e);
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⚠️</div>
+            <div>Ошибка загрузки задач</div>
+          </div>
+        `;
+      }
+    }
+
+    async function takeTask(taskId) {
+      try {
+        const res = await fetch(`${API_URL}/take_task`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({initData, taskId})
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          tg.showAlert('✅ Задача взята в работу!');
+          loadTasks();
+          loadUserData();
+        } else {
+          tg.showAlert('❌ ' + data.error);
+        }
+      } catch (e) {
+        tg.showAlert('❌ Ошибка: ' + e.message);
+      }
+    }
+
+    async function loadMyTasks() {
+      const container = document.getElementById('my-tasks-list');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      try {
+        const res = await fetch(`${API_URL}/my_assignments`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({initData})
+        });
+        const data = await res.json();
+
+        if (!data.assignments || data.assignments.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📝</div>
+              <div>У вас пока нет заданий</div>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = '';
+        const statusMap = {
+          'in_progress': {icon: '⏳', text: 'В работе', color: 'var(--warning)'},
+          'pending_review': {icon: '🔍', text: 'На проверке', color: 'var(--accent)'},
+          'approved': {icon: '✅', text: 'Одобрено', color: 'var(--success)'},
+          'rejected': {icon: '❌', text: 'Отклонено', color: 'var(--danger)'}
+        };
+
+        data.assignments.forEach(assign => {
+          const status = statusMap[assign.status] || statusMap['in_progress'];
+          const card = document.createElement('div');
+          card.className = 'task-card glass neu';
+          card.style.borderLeft = `4px solid ${status.color}`;
+          card.innerHTML = `
+            <div class="task-title">${status.icon} ${assign.title}</div>
+            <div style="color: var(--text-secondary); margin: 10px 0;">
+              Статус: <strong style="color: ${status.color};">${status.text}</strong>
+            </div>
+            ${assign.adminComment ? `
+              <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 12px; margin-top: 12px;">
+                💬 ${assign.adminComment}
+              </div>
+            ` : ''}
+            <div class="task-price" style="margin-top: 12px;">💰 ${assign.price} ₽</div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (e) {
+        console.error('Error loading my tasks:', e);
+      }
+    }
+
+    // Chess
+    let chess = null;
+    let selectedSquare = null;
+    let difficulty = 1;
+    let moveHistory = [];
+    let playerColor = 'w';
+
+    const PIECES = {
+      'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟',
+      'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙'
+    };
+
+    function initChessBoard() {
+      const board = document.getElementById('chess-board');
+      if (board.children.length > 0) return;
+
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          const square = document.createElement('div');
+          square.className = `chess-square ${(row + col) % 2 === 0 ? 'light' : 'dark'}`;
+          square.dataset.row = row;
+          square.dataset.col = col;
+          square.dataset.pos = String.fromCharCode(97 + col) + (8 - row);
+          square.onclick = () => handleSquareClick(square.dataset.pos);
+          board.appendChild(square);
+        }
+      }
+    }
+
+    function setDifficulty(level) {
+      difficulty = level;
+      document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.diff) === level);
+      });
+    }
+
+    function startNewGame() {
+      chess = new Chess();
+      moveHistory = [];
+      selectedSquare = null;
+      playerColor = 'w';
+      
+      document.getElementById('chess-status').textContent = 'Ваш ход';
+      document.getElementById('chess-turn').textContent = 'Вы играете белыми';
+      document.getElementById('chess-analysis').style.display = 'none';
+      
+      renderBoard();
+    }
+
+    function renderBoard() {
+      const board = chess.board();
+      const squares = document.querySelectorAll('.chess-square');
+      
+      squares.forEach(square => {
+        const row = parseInt(square.dataset.row);
+        const col = parseInt(square.dataset.col);
+        const piece = board[row][col];
+        
+        const pieceChar = piece ? PIECES[piece.color === 'w' ? piece.type.toUpperCase() : piece.type] : '';
+        square.innerHTML = piece ? `<div class="chess-piece">${pieceChar}</div>` : '';
+        square.classList.remove('selected', 'move-hint', 'last-move');
+      });
+
+      if (selectedSquare) {
+        const selSquare = document.querySelector(`[data-pos="${selectedSquare}"]`);
+        if (selSquare) selSquare.classList.add('selected');
+
+        const moves = chess.moves({square: selectedSquare, verbose: true});
+        moves.forEach(move => {
+          const sq = document.querySelector(`[data-pos="${move.to}"]`);
+          if (sq) sq.classList.add('move-hint');
+        });
+      }
+
+      if (moveHistory.length > 0) {
+        const lastMove = moveHistory[moveHistory.length - 1];
+        const fromSq = document.querySelector(`[data-pos="${lastMove.from}"]`);
+        const toSq = document.querySelector(`[data-pos="${lastMove.to}"]`);
+        if (fromSq) fromSq.classList.add('last-move');
+        if (toSq) toSq.classList.add('last-move');
+      }
+    }
+
+    function handleSquareClick(pos) {
+      if (!chess) return;
+      if (chess.game_over()) return;
+      if (chess.turn() !== playerColor) return;
+
+      const piece = chess.get(pos);
+
+      if (selectedSquare) {
+        const move = chess.move({
+          from: selectedSquare,
+          to: pos,
+          promotion: 'q'
+        });
+
+        if (move) {
+          moveHistory.push(move);
+          selectedSquare = null;
+          renderBoard();
+          
+          if (chess.game_over()) {
+            endGame();
+          } else {
+            setTimeout(computerMove, 500);
+          }
+        } else if (piece && piece.color === playerColor) {
+          selectedSquare = pos;
+          renderBoard();
+        } else {
+          selectedSquare = null;
+          renderBoard();
+        }
+      } else if (piece && piece.color === playerColor) {
+        selectedSquare = pos;
+        renderBoard();
+      }
+    }
+
+    function computerMove() {
+      if (!chess || chess.game_over()) return;
+
+      document.getElementById('chess-status').textContent = 'Компьютер думает...';
+
+      const moves = chess.moves();
+      let move;
+
+      if (difficulty === 1) {
+        move = moves[Math.floor(Math.random() * moves.length)];
+      } else if (difficulty === 2) {
+        const captureMoves = chess.moves({verbose: true}).filter(m => m.captured);
+        move = captureMoves.length > 0 ? 
+          captureMoves[Math.floor(Math.random() * captureMoves.length)].san :
+          moves[Math.floor(Math.random() * moves.length)];
+      } else {
+        move = getBestMove(2);
+      }
+
+      const result = chess.move(move);
+      if (result) moveHistory.push(result);
+
+      renderBoard();
+
+      if (chess.game_over()) {
+        endGame();
+      } else {
+        document.getElementById('chess-status').textContent = 'Ваш ход';
+      }
+    }
+
+    function getBestMove(depth) {
+      const moves = chess.moves();
+      let bestMove = null;
+      let bestValue = -Infinity;
+
+      moves.forEach(move => {
+        chess.move(move);
+        const value = -minimax(depth - 1, -Infinity, Infinity, false);
+        chess.undo();
+
+        if (value > bestValue) {
+          bestValue = value;
+          bestMove = move;
+        }
+      });
+
+      return bestMove;
+    }
+
+    function minimax(depth, alpha, beta, isMaximizing) {
+      if (depth === 0 || chess.game_over()) {
+        return evaluateBoard();
+      }
+
+      const moves = chess.moves();
+      
+      if (isMaximizing) {
+        let maxEval = -Infinity;
+        for (let move of moves) {
+          chess.move(move);
+          const evaluation = minimax(depth - 1, alpha, beta, false);
+          chess.undo();
+          maxEval = Math.max(maxEval, evaluation);
+          alpha = Math.max(alpha, evaluation);
+          if (beta <= alpha) break;
+        }
+        return maxEval;
+      } else {
+        let minEval = Infinity;
+        for (let move of moves) {
+          chess.move(move);
+          const evaluation = minimax(depth - 1, alpha, beta, true);
+          chess.undo();
+          minEval = Math.min(minEval, evaluation);
+          beta = Math.min(beta, evaluation);
+          if (beta <= alpha) break;
+        }
+        return minEval;
+      }
+    }
+
+    function evaluateBoard() {
+      const pieceValues = {p: 1, n: 3, b: 3, r: 5, q: 9, k: 0};
+      let score = 0;
+
+      const board = chess.board();
+      board.forEach(row => {
+        row.forEach(piece => {
+          if (piece) {
+            const value = pieceValues[piece.type];
+            score += piece.color === 'b' ? value : -value;
+          }
+        });
+      });
+
+      return score;
+    }
+
+    function undoMove() {
+      if (!chess || moveHistory.length < 2) return;
+
+      chess.undo();
+      chess.undo();
+      moveHistory.pop();
+      moveHistory.pop();
+      selectedSquare = null;
+
+      renderBoard();
+      document.getElementById('chess-status').textContent = 'Ваш ход';
+    }
+
+    function endGame() {
+      let result = '';
+      let eloChange = 0;
+
+      if (chess.in_checkmate()) {
+        if (chess.turn() === playerColor) {
+          result = '😢 Вы проиграли! Шах и мат.';
+          eloChange = -20 * difficulty;
+        } else {
+          result = '🎉 Победа! Шах и мат!';
+          eloChange = 30 * difficulty;
+          
+          const currentWins = parseInt(document.getElementById('games-won').textContent) || 0;
+          document.getElementById('games-won').textContent = currentWins + 1;
+        }
+      } else if (chess.in_draw()) {
+        result = '🤝 Ничья';
+        eloChange = 5;
+      } else if (chess.in_stalemate()) {
+        result = '🤝 Пат — ничья';
+        eloChange = 5;
+      }
+
+      const currentElo = parseInt(document.getElementById('chess-elo').textContent) || 400;
+      const newElo = Math.max(100, currentElo + eloChange);
+      document.getElementById('chess-elo').textContent = newElo;
+      document.getElementById('elo-display').textContent = newElo;
+
+      document.getElementById('chess-status').textContent = result;
+      document.getElementById('game-result').innerHTML = `
+        ${result}<br>
+        ELO: ${currentElo} ${eloChange >= 0 ? '+' : ''}${eloChange} = <strong>${newElo}</strong>
+      `;
+
+      showAnalysis();
+    }
+
+    function showAnalysis() {
+      const analysis = document.getElementById('chess-analysis');
+      const moveList = document.getElementById('move-list');
+      
+      moveList.innerHTML = '';
+      moveHistory.forEach((move, index) => {
+        if (index % 2 === 0) {
+          const moveItem = document.createElement('div');
+          moveItem.className = 'move-item';
+          moveItem.textContent = `${Math.floor(index / 2) + 1}. ${move.san} `;
+          
+          if (moveHistory[index + 1]) {
+            moveItem.textContent += moveHistory[index + 1].san;
+          }
+          
+          moveList.appendChild(moveItem);
+        }
+      });
+
+      analysis.style.display = 'block';
+      analysis.scrollIntoView({behavior: 'smooth'});
+    }
+
+    function closeAnalysis() {
+      document.getElementById('chess-analysis').style.display = 'none';
+    }
+
+    async function submitSupport() {
+      const type = document.getElementById('support-type').value;
+      const message = document.getElementById('support-message').value.trim();
+
+      if (!message) {
+        tg.showAlert('Введите сообщение');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/support_ticket`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({initData, type, message})
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          tg.showAlert(`✅ Тикет #${data.ticketId} создан!`);
+          document.getElementById('support-message').value = '';
+        } else {
+          tg.showAlert('❌ ' + data.error);
+        }
+      } catch (e) {
+        tg.showAlert('❌ Ошибка: ' + e.message);
+      }
+    }
+
+    loadSettings();
+    loadUserData();
+    loadTasks();
+  </script>
+</body>
+</html>
